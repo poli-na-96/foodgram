@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
+from django.core.validators import RegexValidator
 from django.db import models
 from django.forms import ValidationError
-from django.core.validators import RegexValidator
 
 User = get_user_model()
 
@@ -53,9 +53,10 @@ class Recipe(models.Model):
     def __str__(self):
         return self.name
 
-    def userfavorites_count(self):
-        '''Функция, считающая, сколько раз рецепт добавляется в избранное.'''
-        return self.userfavorites.count()
+    def favourite_count(self):
+        return UserFavourite.objects.filter(
+            recipe=self
+        ).count()
 
     class Meta:
         verbose_name = 'Рецепт'
@@ -161,3 +162,8 @@ class UserShoppingCart(models.Model):
 
     def __str__(self):
         return self.recipe
+
+
+class Link(models.Model):
+    short_link = models.CharField(max_length=128)
+    long_link = models.CharField(max_length=256)

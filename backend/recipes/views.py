@@ -1,21 +1,26 @@
 import csv
+import uuid
+
 from django.http import HttpResponse
-from rest_framework.decorators import action
+from django.shortcuts import get_object_or_404, redirect
+from rest_framework.decorators import action, api_view
+from rest_framework import filters, status, viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from recipes.models import (
+    Ingredient, Link, Recipe, Tag, UserFavourite, UserShoppingCart
+)
 from recipes.serializers import (
     IngredientSerializer, RecipeCreateSerializer,
     RecipeSerializer, TagSerializer
 )
-from recipes.models import (
-    Ingredient, Recipe, Tag, UserFavourite, UserShoppingCart
-)
-
-from rest_framework import viewsets, status
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
     ordering = ('-pub_date',)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('ingredients__name',)
 
     def get_serializer_class(self):
         if self.action == 'create' or self.action == 'partial_update':
@@ -34,7 +39,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(
                 userfavorites__user=self.request.user
             )
-        if tags_slugs:
+        if self.request.user.is_authenticated and tags_slugs:
             queryset = queryset.filter(tags__slug__in=tags_slugs)
         if author_id:
             queryset = queryset.filter(author__id=author_id)
@@ -140,6 +145,32 @@ class RecipeViewSet(viewsets.ModelViewSet):
             )
         return response
 
+    @action(detail=True, methods=['get'], url_path='get-link')
+    def get_link(self, request, pk=None):
+        base_link = request.build_absolute_uri('/')
+        long_link = f"{base_link}recipes/{pk}"
+        try:
+            link = Link.objects.get(long_link=long_link)
+        except Link.DoesNotExist:
+            short_link = generate_short_link(base_link)
+            link = Link.objects.create(
+                long_link=long_link,
+                short_link=short_link
+            )
+        return Response({'short-link': link.short_link})
+
+
+def generate_short_link(base_link):
+    unique_id = uuid.uuid4().hex[:5]
+    short_link = f"{base_link}s/{unique_id}/"
+    return short_link
+
+
+@api_view(['GET'])
+def redirect_from_short_link(request, slug=None):
+    link = get_object_or_404(Link, short_link=request.build_absolute_uri())
+    return redirect(link.long_link)
+
 
 class IngredientViewSet(viewsets.ModelViewSet):
     queryset = Ingredient.objects.all()
@@ -151,3 +182,4 @@ class TagViewSet(viewsets.ModelViewSet):
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
     pagination_class = None
+    permission_classes = [IsAuthenticated]

@@ -25,6 +25,7 @@ class User(AbstractUser):
                                verbose_name='Аватар пользователя',
                                default=None,
                                null=True)
+    is_blocked = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = 'Пользователь'

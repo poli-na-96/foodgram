@@ -9,9 +9,17 @@ class UserAdmin(admin.ModelAdmin):
     list_display = ('email',
                     'username',
                     'name',
-                    'second_name')
+                    'second_name',
+                    )
+    list_filter = ('is_blocked',)
     search_fields = ('email',
                      'username')
+
+    def block_users(self, request, queryset):
+        queryset.update(is_blocked=True)
+
+    def unblock_users(self, request, queryset):
+        queryset.update(is_blocked=False)
 
 
 admin.site.register(User, UserAdmin)

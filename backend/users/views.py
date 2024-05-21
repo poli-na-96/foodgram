@@ -1,19 +1,17 @@
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from rest_framework.decorators import action
-from djoser.views import UserViewSet
-from rest_framework.pagination import LimitOffsetPagination
-from users.models import Subscription
-from users.serializers import (
-    AvatarSerializer, MyUserSerializer
-)
-from recipes.serializers import SubscriptionSerializer
 from rest_framework import status
-from rest_framework.response import Response
+from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from djoser.views import UserViewSet
+
+from users.models import Subscription
+from users.serializers import AvatarSerializer, MyUserSerializer
+from recipes.serializers import SubscriptionSerializer
 from recipes.permissions import IsOwner
-from rest_framework.decorators import api_view, permission_classes
 
 
 User = get_user_model()

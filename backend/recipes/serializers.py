@@ -1,14 +1,14 @@
 import base64
 import logging
+
 from django.core.files.base import ContentFile
 from rest_framework import serializers
 
-from users.models import Subscription
 from recipes.models import (
     Ingredient, IngredientRecipe, Recipe, Tag,
-    TagRecipe, UserShoppingCart, UserFavourite
+    TagRecipe, UserFavourite, UserShoppingCart
 )
-
+from users.models import Subscription
 from users.serializers import MyUserSerializer
 
 

@@ -1,7 +1,5 @@
 import os
 from pathlib import Path
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
-
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -103,18 +101,23 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.TokenAuthentication',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'DEFAULT_PAGINATION_CLASS': 'recipes.pagination.RecipePagination',
     'PAGE_SIZE': 6,
 }
 
 DJOSER = {
-    'USER': 'users.models.User',
     'LOGIN_FIELD': 'email',
     'SERIALIZERS': {
-        'user_create': 'users.serializers.MyUserSerializer',
+        'user_create': 'users.serializers.MyUserCreateSerializer',
         'current_user': 'users.serializers.MyUserSerializer',
-        'user': 'users.serializers.MyUserSerializer'},
-    'PERMISSIONS': {'user': [IsAuthenticatedOrReadOnly]},
+        'user': 'users.serializers.MyUserSerializer',
+        'set_password': 'users.serializers.MyUserResetPasswordSerializer'
+    },
+    'PERMISSIONS': {
+        'user': ['rest_framework.permissions.IsAuthenticatedOrReadOnly'],
+        'user_list': ['rest_framework.permissions.IsAuthenticatedOrReadOnly']
+    },
+    'HIDE_USERS': False,
 }
 
 

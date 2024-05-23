@@ -1,12 +1,8 @@
 from django.contrib import admin
 from django.urls import include, path
+from recipes.views import (IngredientViewSet, RecipeViewSet, TagViewSet,
+                           redirect_from_short_link)
 from rest_framework import routers
-from recipes.views import (
-    IngredientViewSet,
-    RecipeViewSet,
-    TagViewSet,
-    redirect_from_short_link
-)
 from users.views import MyUserViewSet, subscribe
 
 router = routers.DefaultRouter()

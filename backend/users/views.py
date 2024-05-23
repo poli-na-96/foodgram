@@ -1,26 +1,30 @@
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from djoser.views import UserViewSet
+from recipes.permissions import IsOwner
+from recipes.serializers import SubscriptionSerializer
 from rest_framework import status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from djoser.views import UserViewSet
-
 from users.models import Subscription
-from users.serializers import AvatarSerializer, MyUserSerializer
-from recipes.serializers import SubscriptionSerializer
-from recipes.permissions import IsOwner
-
+from users.serializers import AvatarSerializer
 
 User = get_user_model()
 
 
 class MyUserViewSet(UserViewSet):
     queryset = User.objects.all()
-    serializer_class = MyUserSerializer
-    pagination_class = None
+
+    @action(
+        ["get", "put", "patch", "delete"],
+        detail=False,
+        permission_classes=[IsAuthenticated]
+    )
+    def me(self, request, *args, **kwargs):
+        return super().me(request, *args, **kwargs)
 
     @action(
         detail=False,
@@ -32,8 +36,12 @@ class MyUserViewSet(UserViewSet):
         subscriptions = Subscription.objects.filter(subscriber=request.user)
         paginator = LimitOffsetPagination()
         paginator.default_limit = 6
-        paginated_subscriptions = paginator.paginate_queryset(subscriptions, request)
-        serializer = SubscriptionSerializer(paginated_subscriptions, many=True)
+        paginated_subscriptions = paginator.paginate_queryset(
+            subscriptions, request
+        )
+        serializer = SubscriptionSerializer(
+            paginated_subscriptions, many=True, context={'request': request}
+        )
         return paginator.get_paginated_response(serializer.data)
 
     @action(
@@ -75,7 +83,10 @@ def subscribe(request, pk):
             subscription = Subscription.objects.create(
                 subscriber=request.user, subscription=user
             )
-            serializer = SubscriptionSerializer(subscription)
+            serializer = SubscriptionSerializer(
+                subscription,
+                context={'request': request}
+            )
             return JsonResponse(serializer.data, status=201)
         else:
             return JsonResponse(
@@ -84,15 +95,15 @@ def subscribe(request, pk):
             )
 
     elif request.method == 'DELETE':
-        subscription = get_object_or_404(
-            Subscription, subscriber=request.user,
+        subscription = Subscription.objects.filter(
+            subscriber=request.user,
             subscription=user
-        )
+        ).first()
         if subscription:
             subscription.delete()
             return JsonResponse(
                 {'message': 'Подписка удалена успешно.'},
-                status=201
+                status=204
             )
         else:
             return JsonResponse(

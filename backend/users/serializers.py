@@ -2,9 +2,9 @@ import base64
 
 from django.contrib.auth import get_user_model
 from django.core.files.base import ContentFile
-from djoser.serializers import UserCreateSerializer
+from djoser.serializers import (CurrentPasswordSerializer, PasswordSerializer,
+                                UserCreateSerializer, UserSerializer)
 from rest_framework import serializers
-
 from users.models import Subscription
 
 User = get_user_model()
@@ -34,7 +34,7 @@ class AvatarSerializer(serializers.ModelSerializer):
         return data
 
 
-class MyUserSerializer(UserCreateSerializer):
+class MyUserSerializer(UserSerializer):
     avatar = Base64ImageField(required=False)
     is_subscribed = serializers.SerializerMethodField()
 
@@ -50,6 +50,14 @@ class MyUserSerializer(UserCreateSerializer):
             return subscription_exists
         return False
 
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'username', 'first_name',
+                  'last_name', 'avatar', 'is_subscribed')
+
+
+class MyUserCreateSerializer(UserCreateSerializer):
+
     def create(self, validated_data):
         user = User(
             email=validated_data['email'],
@@ -61,7 +69,22 @@ class MyUserSerializer(UserCreateSerializer):
         user.save()
         return user
 
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation.pop('password', None)
+        representation['id'] = instance.id
+        return representation
+
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'first_name',
-                  'last_name', 'password', 'avatar', 'is_subscribed')
+        fields = ('email', 'username', 'first_name',
+                  'last_name', 'password')
+
+
+class MyUserResetPasswordSerializer(
+    CurrentPasswordSerializer, PasswordSerializer
+):
+
+    class Meta:
+        fields = ('new_password', 'current_password')
+        model = User

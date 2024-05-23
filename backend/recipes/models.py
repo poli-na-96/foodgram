@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
-from django.forms import ValidationError
 
 User = get_user_model()
 
@@ -9,11 +9,6 @@ User = get_user_model()
 def validate_positive(value):
     if value < 1:
         raise ValidationError('Значение должно быть не меньше 1.')
-
-
-def validate_more_than_0(value):
-    if value == 0:
-        raise ValidationError('Значение должно быть больше 0.')
 
 
 class Recipe(models.Model):
@@ -84,7 +79,7 @@ class Tag(models.Model):
         return self.name
 
     class Meta:
-        verbose_name = 'Тег'
+        verbose_name = 'тег'
         verbose_name_plural = 'Теги'
 
 
@@ -116,8 +111,15 @@ class IngredientRecipe(models.Model):
                                verbose_name='Рецепт',
                                related_name='recipe_ingredient')
     amount = models.PositiveIntegerField(
-        validators=[validate_more_than_0],
+        validators=[validate_positive],
         verbose_name='Количество',)
+
+    class Meta:
+        verbose_name = 'ингредиент рецепта'
+        verbose_name_plural = 'Ингредиенты рецептов'
+
+    def __str__(self):
+        return f"{self.ingredients}-{self.recipe}"
 
 
 class TagRecipe(models.Model):
@@ -128,6 +130,13 @@ class TagRecipe(models.Model):
                                on_delete=models.CASCADE,
                                verbose_name='Рецепт',
                                related_name='recipe_tag')
+
+    class Meta:
+        verbose_name = 'тег рецепта'
+        verbose_name_plural = 'Теги рецептов'
+
+    def __str__(self):
+        return f"{self.tags}-{self.recipe}"
 
 
 class UserFavourite(models.Model):
@@ -141,29 +150,38 @@ class UserFavourite(models.Model):
                                related_name='userfavorites')
 
     class Meta:
-        verbose_name = 'Избранный рецепт пользователя'
+        verbose_name = 'избранный рецепт пользователя'
         verbose_name_plural = 'Избранные рецепты пользователя'
 
     def __str__(self):
-        return self.recipe
+        return f"{self.user}-{self.recipe}"
 
 
 class UserShoppingCart(models.Model):
     user = models.ForeignKey(User,
                              on_delete=models.CASCADE,
-                             verbose_name='Пользователь')
+                             verbose_name='Пользователь',
+                             related_name='usershoppingcart')
     recipe = models.ForeignKey(Recipe,
                                on_delete=models.CASCADE,
-                               verbose_name='Список покупок')
+                               verbose_name='Список покупок',
+                               related_name='usershoppingcart')
 
     class Meta:
-        verbose_name = 'Что купить'
-        verbose_name_plural = 'Что купить'
+        verbose_name = 'корзина пользователя'
+        verbose_name_plural = 'Продукты в корзинах подьзователей'
 
     def __str__(self):
-        return self.recipe
+        return f"{self.user}-{self.recipe}"
 
 
 class Link(models.Model):
     short_link = models.CharField(max_length=128)
     long_link = models.CharField(max_length=256)
+
+    class Meta:
+        verbose_name = 'ссылка на рецепт'
+        verbose_name_plural = 'Ссылки на рецепт'
+
+    def __str__(self):
+        return f"{self.short_link}-{self.long_link}"

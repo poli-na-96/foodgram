@@ -1,14 +1,18 @@
+from http import HTTPStatus
+
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from djoser.views import UserViewSet
-from recipes.permissions import IsOwner
-from recipes.serializers import SubscriptionSerializer
 from rest_framework import status
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from recipes.permissions import IsOwner
+from recipes.serializers import SubscriptionSerializer
+from users.constants import SUBSCRIPTIONS_PAGE_NUMBER
 from users.models import Subscription
 from users.serializers import AvatarSerializer
 
@@ -35,7 +39,7 @@ class MyUserViewSet(UserViewSet):
     def subscriptions(self, request):
         subscriptions = Subscription.objects.filter(subscriber=request.user)
         paginator = LimitOffsetPagination()
-        paginator.default_limit = 6
+        paginator.default_limit = SUBSCRIPTIONS_PAGE_NUMBER
         paginated_subscriptions = paginator.paginate_queryset(
             subscriptions, request
         )
@@ -74,7 +78,7 @@ def subscribe(request, pk):
         if request.user == user:
             return JsonResponse(
                 {'error': 'Вы не можете подписаться на самого себя.'},
-                status=400
+                status=HTTPStatus.BAD_REQUEST.value
             )
         subscription_exists = Subscription.objects.filter(
             subscriber=request.user, subscription=user
@@ -91,7 +95,7 @@ def subscribe(request, pk):
         else:
             return JsonResponse(
                 {'error': 'Вы уже подписаны на этого пользователя.'},
-                status=400
+                status=HTTPStatus.BAD_REQUEST.value
             )
 
     elif request.method == 'DELETE':
@@ -103,10 +107,10 @@ def subscribe(request, pk):
             subscription.delete()
             return JsonResponse(
                 {'message': 'Подписка удалена успешно.'},
-                status=204
+                status=HTTPStatus.NO_CONTENT.value
             )
         else:
             return JsonResponse(
                 {'error': 'Вы не подписаны на этого пользователя.'},
-                status=400
+                status=HTTPStatus.BAD_REQUEST.value
             )

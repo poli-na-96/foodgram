@@ -1,26 +1,25 @@
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import RegexValidator
 from django.db import models
+
+from users.constants import (MAX_LENGTH_EMAIL, MAX_LENGTH_FIRST_NAME,
+                             MAX_LENGTH_LAST_NAME, MAX_LENGTH_PASSWORD,
+                             MAX_LENGTH_USERNAME)
+from users.validators import username_validator
 
 
 class User(AbstractUser):
-    email = models.EmailField(max_length=254,
+    email = models.EmailField(max_length=MAX_LENGTH_EMAIL,
                               verbose_name='Адрес электронной почты',
                               unique=True)
-    username_validator = RegexValidator(
-        regex=r'^[\w.@+-]+$',
-        message='''Юзернейм должен состоять из букв, цифр
-                 или содержать следующие символы: .@+-''',
-    )
-    username = models.CharField(max_length=150,
+    username = models.CharField(max_length=MAX_LENGTH_USERNAME,
                                 unique=True,
                                 validators=[username_validator],
                                 verbose_name='Юзернейм')
-    first_name = models.CharField(max_length=150,
+    first_name = models.CharField(max_length=MAX_LENGTH_FIRST_NAME,
                                   verbose_name='Имя')
-    last_name = models.CharField(max_length=150,
+    last_name = models.CharField(max_length=MAX_LENGTH_LAST_NAME,
                                  verbose_name='Фамилия')
-    password = models.CharField(max_length=150,
+    password = models.CharField(max_length=MAX_LENGTH_PASSWORD,
                                 verbose_name='Пароль')
     avatar = models.ImageField(upload_to='users/images',
                                verbose_name='Аватар пользователя',

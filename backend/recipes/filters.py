@@ -1,5 +1,5 @@
-from django.db.models import Q
 from django_filters import rest_framework as filters
+
 from recipes.models import Ingredient
 
 
@@ -12,5 +12,5 @@ class IngredientSearchFilter(filters.FilterSet):
 
     def filter_name(self, queryset, name, value):
         return queryset.filter(
-            Q(name__istartswith=value)
+            name__istartswith=value
         )

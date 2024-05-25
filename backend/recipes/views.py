@@ -4,6 +4,11 @@ import uuid
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import status, viewsets
+from rest_framework.decorators import action, api_view
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
 from recipes.filters import IngredientSearchFilter
 from recipes.models import (Ingredient, Link, Recipe, Tag, UserFavourite,
                             UserShoppingCart)
@@ -12,10 +17,7 @@ from recipes.serializers import (IngredientSerializer, RecipeCreateSerializer,
                                  RecipeSerializer, TagSerializer,
                                  UserFavouriteSerializer,
                                  UserShoppingCartSerializer)
-from rest_framework import status, viewsets
-from rest_framework.decorators import action, api_view
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
+from recipes.utils import get_ingridients_in_shop_cart
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -158,32 +160,15 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         user = request.user
-        if not user.is_authenticated:
-            return Response(status=status.HTTP_401_UNAUTHORIZED)
-        ingredient_details = {}
-        recipes = UserShoppingCart.objects.filter(user=user).values_list(
-            'recipe', flat=True
-        )
-        for recipe_id in recipes:
-            recipe = Recipe.objects.get(pk=recipe_id)
-            for ingredient_recipe in recipe.recipe_ingredient.all():
-                ingredient = ingredient_recipe.ingredients
-                amount = ingredient_recipe.amount
-                unit = ingredient.measurement_unit
-                if ingredient.name in ingredient_details:
-                    ingredient_details[ingredient.name]['amount'] += amount
-                else:
-                    ingredient_details[ingredient.name] = {
-                        'amount': amount,
-                        'unit': unit
-                    }
         response = HttpResponse(content_type='text/csv', charset='utf-8')
         response['Content-Disposition'] = (
             'attachment; filename="ingredients_to_buy.csv"'
         )
         writer = csv.writer(response)
         writer.writerow(['Ingredient', 'Total Amount', 'Measurement Unit'])
-        for ingredient_name, details in ingredient_details.items():
+        for ingredient_name, details in get_ingridients_in_shop_cart(
+            user
+        ).items():
             writer.writerow(
                 [ingredient_name, details['amount'], details['unit']]
             )

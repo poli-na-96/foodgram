@@ -1,14 +1,13 @@
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import MinValueValidator
 from django.db import models
 
+from recipes.constants import (MAX_LENGTH_INGREDIENT, MAX_LENGTH_LONG_LINK,
+                               MAX_LENGTH_MEAS_UNIT, MAX_LENGTH_RECIPE,
+                               MAX_LENGTH_SHORT_LINK, MAX_LENGTH_TAG,
+                               MAX_LENGTH_TAG_SLUG)
+
 User = get_user_model()
-
-
-def validate_positive(value):
-    if value < 1:
-        raise ValidationError('Значение должно быть не меньше 1.')
 
 
 class Recipe(models.Model):
@@ -16,10 +15,10 @@ class Recipe(models.Model):
                                related_name='recipes',
                                on_delete=models.CASCADE,
                                verbose_name='Автор публикации')
-    name = models.CharField(max_length=256,
+    name = models.CharField(max_length=MAX_LENGTH_RECIPE,
                             verbose_name='Название',
-                            help_text='''Введите название блюда,
-                                         не более 256 символов''')
+                            help_text='Введите название блюда, '
+                                      f'не более {MAX_LENGTH_RECIPE} символов')
     text = models.TextField(verbose_name='Описание',
                             help_text='''Введите описание блюда,
                                          не более 256 символов''')
@@ -35,7 +34,10 @@ class Recipe(models.Model):
                                   verbose_name='Теги',
                                   through='TagRecipe')
     cooking_time = models.PositiveSmallIntegerField(
-        validators=[validate_positive],
+        validators=[MinValueValidator(
+            limit_value=1,
+            message='Значение должно быть не меньше 1'
+        )],
         verbose_name='Время приготовления',
         help_text='Укажите время приготовления в минутах'
     )
@@ -60,19 +62,13 @@ class Recipe(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=32,
+    name = models.CharField(max_length=MAX_LENGTH_TAG,
                             unique=True,
                             verbose_name='Название',
                             help_text='Название должно быть уникальным')
-    slug_validator = RegexValidator(
-        regex=r'^[-a-zA-Z0-9_]+$',
-        message='''Слаг должен состоять из букв, цифр
-                 или содержать следующие символы: -_''',
-    )
-    slug = models.SlugField(max_length=32,
+    slug = models.SlugField(max_length=MAX_LENGTH_TAG_SLUG,
                             unique=True,
                             verbose_name='Слаг',
-                            validators=[slug_validator],
                             help_text='Слаг должен быть уникальным')
 
     def __str__(self):
@@ -84,18 +80,23 @@ class Tag(models.Model):
 
 
 class Ingredient(models.Model):
-    name = models.CharField(max_length=128,
-                            verbose_name='Название',
-                            help_text='''Введите название ингредиента,
-                                         не более 128 символов''')
-    measurement_unit = models.CharField(max_length=64,
-                                        verbose_name='Единица измерения',
-                                        help_text='''Введите единицу измерения,
-                                            не более 64 символов''')
+    name = models.CharField(
+        max_length=MAX_LENGTH_INGREDIENT,
+        verbose_name='Название',
+        help_text='Введите название ингредиента, '
+                  f'не более {MAX_LENGTH_INGREDIENT} символов'
+    )
+    measurement_unit = models.CharField(
+        max_length=MAX_LENGTH_MEAS_UNIT,
+        verbose_name='Единица измерения',
+        help_text='Введите единицу измерения, не более '
+                  f'{MAX_LENGTH_MEAS_UNIT}символов'
+    )
 
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        unique_together = ['name', 'measurement_unit']
 
     def __str__(self):
         return self.name
@@ -111,7 +112,10 @@ class IngredientRecipe(models.Model):
                                verbose_name='Рецепт',
                                related_name='recipe_ingredient')
     amount = models.PositiveIntegerField(
-        validators=[validate_positive],
+        validators=[MinValueValidator(
+            limit_value=1,
+            message='Значение должно быть не меньше 1'
+        )],
         verbose_name='Количество',)
 
     class Meta:
@@ -123,6 +127,8 @@ class IngredientRecipe(models.Model):
 
 
 class TagRecipe(models.Model):
+    '''Комментарий к ревью: эта модель используется в сериализаторе
+    при переопределении метода create, поэтому я ее явно определяю.'''
     tags = models.ForeignKey(Tag,
                              on_delete=models.CASCADE,
                              verbose_name='Теги')
@@ -176,8 +182,8 @@ class UserShoppingCart(models.Model):
 
 
 class Link(models.Model):
-    short_link = models.CharField(max_length=128)
-    long_link = models.CharField(max_length=256)
+    short_link = models.CharField(max_length=MAX_LENGTH_SHORT_LINK)
+    long_link = models.CharField(max_length=MAX_LENGTH_LONG_LINK)
 
     class Meta:
         verbose_name = 'ссылка на рецепт'

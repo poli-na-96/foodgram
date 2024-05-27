@@ -20,12 +20,12 @@ Cоздать и активировать виртуальное окружен�
 
 *docker compose -f infra/docker-compose.yml up --build*
 
-Проект будет доступен локально по адресу: https://localhost
+Проект будет доступен локально по адресу: https://localhost:8081
 
 __Примеры запросов.__
 *Запрос на создание рецепта:*
 
-http://localhost/api/recipes/
+http://localhost:8081/api/recipes/
 {
 "ingredients": [
 {}
@@ -67,7 +67,7 @@ http://localhost/api/recipes/
 }
 
 *Запрос на регистрацию пользователя.*
-http://localhost/api/users/
+http://localhost:8081/api/users/
 {
   "email": "vpupkin@yandex.ru",
   "username": "vasya.pupkin",
@@ -94,7 +94,7 @@ DB_HOST=db
 DB_PORT=5432
 SECRET_KEY='django-insecure-cg6*%6d51ef8f#4!r3*$vmxm4567'
 DEBUG=False
-ALLOWED_HOSTS='158.160.17.163,127.0.0.1,localhost,myfoodgramm.hopto.org'
+ALLOWED_HOSTS='158.160.17.163,127.0.0.1,localhost:8081,myfoodgramm.hopto.org'
 
 __Cпособ запуска миграций.__
 При запущенном проекте на локальной машине в новом терминале последовательно выполните команды:

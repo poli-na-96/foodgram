@@ -108,7 +108,7 @@ __Автор проекта:__
 Путилина Полина, *github: poli-na-96*
 
 __Данные для доступа в админ-зону:__
-username: polina password: Gjkkb1996
+email: ppv96@yandex.ru password: Gjkkb1996
 
 Проект доступен по доменному имени: *https://myfoodgramm.hopto.org*
 

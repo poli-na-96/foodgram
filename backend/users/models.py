@@ -26,6 +26,8 @@ class User(AbstractUser):
                                default=None,
                                null=True)
     is_blocked = models.BooleanField(default=False)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'username']
 
     class Meta:
         verbose_name = 'Пользователь'

@@ -127,8 +127,6 @@ class IngredientRecipe(models.Model):
 
 
 class TagRecipe(models.Model):
-    '''Комментарий к ревью: эта модель используется в сериализаторе
-    при переопределении метода create, поэтому я ее явно определяю.'''
     tags = models.ForeignKey(Tag,
                              on_delete=models.CASCADE,
                              verbose_name='Теги')
